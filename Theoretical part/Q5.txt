@@ -1,0 +1,46 @@
+(define div0 (lambda (x) (/ 3 0)))
+(define foo (lambda (x y) (if (= x 0) x y)))
+
+>(foo 0 (div0))
+
+Normal order:
+
+normal-eval: [(foo 0 (div0))]
+    normal-eval: [((lambda (x) (if (= x 0) x y)) 0 (div0))]
+    normal-eval: [(lambda (x) (if (= x 0) x y))] ==>
+    <closure (x) (if (x) x y)>
+    
+    substitute:
+    (if (x) x y) o {x = 0}            ==> (if (= 0 0) 0 y)
+    (if (= 0 0) 0 y) o {y = (div0)} ==> (if (= 0 0) 0 (div0))
+
+    reduce:
+    normal-eval: [(if (= 0 0) 0 (div0))]
+        normal-eval: [(= 0 0)]
+            normal-eval: [ = ] ==> <primitive proc =>
+            normal-eval: [ 0 ] ==> 0
+            normal-eval: [ 0 ] ==> 0
+        ==> #t
+        normal-eval: [ 0 ] ==> 0
+    ==> 0
+
+Applicative order:
+
+applicative-eval: [(foo 0 (div0))]
+    applicative-eval: [((lambda (x) (if (= x 0) x y)) 0 (div0))]
+    applicative-eval: [(lambda (x) (if (= x 0) x y))] ==>
+    <closure (x) (if (x) x y)>
+
+        applicative-eval: [ 0 ] ==> 0 
+        applicative-eval: [(div0)]
+            applicative-eval: [(lambda (x) (/ 3 0))] ==>
+            <closure (x) (/ 3 0)>
+
+            
+                applicative-eval: [(/ 3 0)]
+                    applicative-eval: [ / ] ==> <primitive proc =>
+                    applicative-eval: [ 3 ] ==> 3
+                    applicative-eval: [ 0 ] ==> 0
+                ==> Division by 0 ERROR
+    
+    

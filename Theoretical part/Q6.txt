@@ -1,0 +1,50 @@
+(define ten (+ 5 5))
+
+    (define multi5 (lambda (x) (+ x x x x x)))
+
+    > (multi5 ten)
+
+    Normal order: 
+
+    normal-eval [(multi5 ten)] 
+        normal-eval [((lambda (x) (+ x x x x x)) (+ 5 5))]
+        normal-eval [(lambda (x) (+ x x x x x))] ==> <closure (x) (+ x x x x x)>
+        substiute:
+        (+ x x x x x) o {x = (+ 5 5)}
+        ==> 
+        (+ (+ 5 5) (+ 5 5) (+ 5 5) (+ 5 5) (+ 5 5))
+        
+        reduce:
+        normal-eval: [(+ (+ 5 5) (+ 5 5) (+ 5 5) (+ 5 5) (+ 5 5))]
+            normal-eval: [ + ] ==> <primitive proc +>
+            normal-eval: [(+ 5 5)]
+                normal-eval: [ + ] ==> <primitive proc +>
+                normal-eval: [ 5 ] ==> 5
+                normal-eval: [ 5 ] ==> 5
+            ==> 10
+            ...... evaluting (+ 5 5) 4 more times
+        ==> 50
+
+    Applicative order:
+
+    applicative-eval [(multi5 ten)]
+        applicative-eval [((lambda (x) (+ x x x x x)) (+ 5 5))]
+        applicative-eval [(+ 5 5)]
+            applicative-eval [ + ] ==> <primitive proc +>
+            applicative-eval [ 5 ] ==> 5
+            applicative-eval [ 5 ] ==> 5
+        ==> 10
+        
+        substitute:
+        (+ x x x x x) o {x = 10} ==> (+ 10 10 10 10 10)
+
+        reduce:
+        applicative-eval [(+ 10 10 10 10 10)]
+        applicative-eval [ + ] ==> <primitive proc +>
+            applicative-eval [ 10 ] ==> 10
+            applicative-eval [ 10 ] ==> 10
+            applicative-eval [ 10 ] ==> 10
+            applicative-eval [ 10 ] ==> 10
+            applicative-eval [ 10 ] ==> 10
+
+        ==> 50
