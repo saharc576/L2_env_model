@@ -17,18 +17,20 @@ export interface Store {
     vals: Box<Value>[];
 }
 
-export const isStore = ...;
-export const makeEmptyStore = ...;
-export const theStore: Store = 
-export const extendStore = (s: Store, val: Value): Store =>
-    // Complete
+export const isStore = (x: any): x is Store => x.tag === "Store";
+export const makeEmptyStore = (): Store => ({tag: "Store", vals: []});
+export const theStore: Store = makeEmptyStore();
+export const extendStore = (s: Store, val: Value): Store => {
+    const newStoreVals = s.vals.concat(makeBox(val));
+    return {tag: "Store", vals: newStoreVals};
+}
     
 export const applyStore = (store: Store, address: number): Result<Value> =>
-    // Complete
+    store.vals.length < address ? makeOk(unbox(store.vals[address])) : makeFailure("address is illegal");
 
     
 export const setStore = (store: Store, address: number, val: Value): void => 
-    // Complete
+    setBox(store.vals[address], val);
 
 
 // ========================================================
