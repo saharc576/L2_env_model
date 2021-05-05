@@ -1,7 +1,6 @@
 import { add, isEmpty, map, reduce, zipWith } from 'ramda'
 import { Value } from './L21-value-store'
 import { Result, makeFailure, makeOk, bind, either } from '../shared/result'
-import { rest } from '../shared/list'
 
 // ========================================================
 // Box datatype
@@ -28,8 +27,6 @@ export const theStore: Store = makeEmptyStore();
 export const extendStore = (s: Store, val: Value): Store => {
   const valsUnboxed = unbox(s.vals);
   s.vals = isEmpty(valsUnboxed) ? makeBox(makeBox([val])) : makeBox(valsUnboxed.concat(makeBox([val])));
-  console.log("\n\nextend store -- new store is %j\n\n", s);       // TODO: delete
-
   return s;
 }
 
@@ -40,12 +37,9 @@ export const applyStore = (store: Store, address: number): Result<Value> =>
 
 
 
-export const setStore = (store: Store, address: number, val: Value): void => {
-  console.log("\n\nset store -- OLD store[address] is %j", (unbox(store.vals))[address]);       // TODO: delete
-  setBox(unbox(store.vals)[address], val)
-  console.log("\nset store -- new store[address] is %j\n\n", (unbox(store.vals))[address]);      // TODO: delete
-  return;
-}
+export const setStore = (store: Store, address: number, val: Value): void => 
+  setBox(unbox(store.vals)[address], val);
+  
 
 // ========================================================
 // Environment data type
@@ -88,27 +82,38 @@ const isExtEnv = (x: any): x is ExtEnv => x.tag === 'ExtEnv'
 export const isEnv = (x: any): x is Env => isGlobalEnv(x) || isExtEnv(x)
 
 // Apply-env
-export const applyEnv = (env: Env, v: string): Result<number> => {
-  const ret =   isGlobalEnv(env) ? applyGlobalEnv(env, v) : applyExtEnv(env, v)
-  return ret;
-}
+export const applyEnv = (env: Env, v: string): Result<number> => 
+  isGlobalEnv(env) ? applyGlobalEnv(env, v) : applyExtEnv(env, v)
 
+/* 
+purpose: Finds the address of a given value IN GE. 
+returns: Result of address.  
+*/
 const applyGlobalEnv = (env: GlobalEnv, v: string): Result<number> => 
-  unbox(env.vars).includes(v) ? makeOk(unbox(env.addresses[unbox(env.vars).indexOf(v)])) : makeFailure("value doesn't exist");
-  
+  unbox(env.vars).includes(v) ? makeOk(unbox(env.addresses)[unbox(env.vars).indexOf(v)]) : makeFailure("value doesn't exist");
+
+
+/* 
+purpose: Adds a given value to the given address - IN GE. Doesn't affect the store.
+returns: void.  
+*/
 export const globalEnvAddBinding = (v: string, addr: number): void => {
   setBox(theGlobalEnv.addresses, unbox(theGlobalEnv.addresses).concat(addr))
   setBox(theGlobalEnv.vars, unbox(theGlobalEnv.vars).concat(v))
 }
 
+/* 
+purpose: Finds the address of a given value IN A GIVEN EXT-ENV. If the value wasn't found, searching in the next env. 
+returns: Result of address.  
+*/
 const applyExtEnv = (env: ExtEnv, v: string): Result<number> =>
   env.vars.includes(v) ? makeOk(env.addresses[env.vars.indexOf(v)]) : applyEnv(env.nextEnv, v)
 
+  
 export const applyEnvStore = (env: Env, v: string): Result<number> =>
   isGlobalEnv(env) ? applyGlobalEnvStore(env, v) :
   isExtEnv(env) ? applyExtEnvStore(env, v) :
   env;
-
 
 
 const applyGlobalEnvStore = (ge: GlobalEnv, v: string): Result<number> =>
